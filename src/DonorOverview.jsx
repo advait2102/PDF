@@ -16,9 +16,11 @@ const dummyMainGrid = [
 ];
 
 const DonorOverview = () => {
-  const [rowHeight, setRowHeight] = useState(260); 
+  const [rowHeight, setRowHeight] = useState(260);
   const isResizing = useRef(false);
   const [selectedDoc, setSelectedDoc] = useState(dummyChildGrid[0].document);
+  const [showMenu, setShowMenu] = useState(false);
+  const [mergedFile, setMergedFile] = useState(null);
 
   const handleMouseDown = () => {
     isResizing.current = true;
@@ -30,7 +32,7 @@ const DonorOverview = () => {
   };
   const handleMouseMove = (e) => {
     if (isResizing.current) {
-      const newHeight = Math.max(120, e.clientY - 80); 
+      const newHeight = Math.max(120, e.clientY - 80);
       setRowHeight(newHeight);
     }
   };
@@ -43,22 +45,58 @@ const DonorOverview = () => {
     };
   });
 
+  // Merge handler
+  const handleMerge = async () => {
+    setShowMenu(false);
+    const fileName = window.prompt('Enter a name for the merged file:', 'Merged.pdf');
+    if (!fileName) return;
+    // Simulate merge: just add a new file to the grid
+    setMergedFile(fileName);
+    setSelectedDoc(fileName);
+  };
+
+  // Files to show in grid
+  const filesToShow = mergedFile
+    ? [{ id: 2003671, document: mergedFile }, ...dummyChildGrid]
+    : dummyChildGrid;
+
   return (
     <div style={{ width: '100%', height: '100%', background: '#f9f9f9', display: 'flex', flexDirection: 'column' }}>
       {/* First Row: 3 columns, resizable */}
       <div style={{ display: 'flex', width: '100%', minHeight: 120, height: rowHeight, transition: 'height 0.1s', background: '#fff', boxShadow: '0 2px 8px #0001', borderRadius: 8, margin: 24, marginBottom: 0, overflow: 'hidden' }}>
         {/* 1st col: Child grid */}
         <div style={{ flex: '0 0 30%', borderRight: '1px solid #eee', padding: 16, minWidth: 120, overflow: 'auto' }}>
-          <table style={{ width: '100%', fontSize: 14, marginTop: 8, background: '#fff', borderCollapse: 'collapse' }}>
+          <table style={{ width: '100%', fontSize: 14, marginTop: 0, background: '#fff', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#111' }}>
-                <th style={{ textAlign: 'left', padding: 8, color: '#fff', fontWeight: 700 }}>#</th>
-                <th style={{ textAlign: 'left', padding: 8, color: '#fff', fontWeight: 700 }}>Document</th>
+                <th style={{ textAlign: 'left', padding: 8, color: '#fff', fontWeight: 700, width: 40 }}>#</th>
+                <th style={{ textAlign: 'left', padding: 8, color: '#fff', fontWeight: 700, position: 'relative' }}>
+                  <span>Document</span>
+                  <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}>
+                    <button
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                      onClick={() => setShowMenu((v) => !v)}
+                      title="Settings"
+                    >
+                      <span style={{ fontSize: 20, color: '#fff', background: '#111', borderRadius: '50%', padding: 4 }}>⚙️</span>
+                    </button>
+                    {showMenu && (
+                      <div style={{ position: 'absolute', top: 28, right: 0, background: '#fff', border: '1px solid #ccc', borderRadius: 6, boxShadow: '0 2px 8px #0002', zIndex: 10 }}>
+                        <button
+                          style={{ background: 'none', border: 'none', color: '#111', fontWeight: 600, padding: '10px 24px', cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                          onClick={handleMerge}
+                        >
+                          Merge
+                        </button>
+                      </div>
+                    )}
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {dummyChildGrid.map((row) => (
-                <tr key={row.id} style={{ background: selectedDoc === row.document ? '#e3eafc' : '#fff', cursor: 'pointer' }} onClick={() => setSelectedDoc(row.document)}>
+              {filesToShow.map((row) => (
+                <tr key={row.id + row.document} style={{ background: selectedDoc === row.document ? '#e3eafc' : '#fff', cursor: 'pointer' }} onClick={() => setSelectedDoc(row.document)}>
                   <td style={{ padding: 8, color: '#111' }}>{row.id}</td>
                   <td style={{ padding: 8, color: '#111' }}>{row.document}</td>
                 </tr>
