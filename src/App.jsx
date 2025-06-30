@@ -3,17 +3,19 @@ import './App.css'
 import PdfTronViewer from './PdfTronViewer';
 import DonorOverview from './DonorOverview';
 import AuditLog from './AuditLog';
+import MergePDF from './MergePDF';
 
 const agencyFolders = [
-  { name: 'Agency 1', locked: true, assigned: false, files: ['Game of Thrones.pdf'] },
-  { name: 'Agency 2', locked: true, assigned: false, files: ['Game of Thrones.pdf'] },
-  { name: 'Agency 4', locked: false, assigned: true, files: ['Game of Thrones.pdf'] },
-  { name: 'Agency 5', locked: false, assigned: true, files: ['Game of Thrones.pdf'] },
+  { name: 'Agency 1', locked: true, assigned: false, files: ['Black_Holes.pdf', 'Game of Thrones.pdf', 'Origin_of_Species.pdf', 'Special_Relativity.pdf'] },
+  { name: 'Agency 2', locked: true, assigned: false, files: ['Black_Holes.pdf', 'Game of Thrones.pdf', 'Origin_of_Species.pdf', 'Special_Relativity.pdf'] },
+  { name: 'Agency 4', locked: false, assigned: true, files: ['Black_Holes.pdf', 'Game of Thrones.pdf', 'Origin_of_Species.pdf', 'Special_Relativity.pdf'] },
+  { name: 'Agency 5', locked: false, assigned: true, files: ['Black_Holes.pdf', 'Game of Thrones.pdf', 'Origin_of_Species.pdf', 'Special_Relativity.pdf'] },
 ];
 
 function App() {
   const [selectedAgency, setSelectedAgency] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
+  // Store both agency index and file name for uniqueness
+  const [selectedFile, setSelectedFile] = useState(null); // { agencyIdx, file } or null
   const [page, setPage] = useState('quality'); // 'quality', 'donor-overview', 'audit-log'
 
   return (
@@ -25,7 +27,7 @@ function App() {
       {/* Menu Bar */}
       <nav style={{ width: '100%', background: '#1565c0', color: '#fff', display: 'flex', alignItems: 'center', padding: '0 24px', height: 48, boxSizing: 'border-box', borderBottom: '1px solid #e0e0e0' }}>
         <div style={{ display: 'flex', gap: 8 }}>
-          {['QA/QC', 'Donor Overview', 'OCR', 'Archived Donors', 'Audit logs', 'Track your files'].map((label, idx) => (
+          {['QA/QC', 'Donor Overview', 'OCR', 'Archived Donors', 'Audit logs', 'Track your files', 'Merge PDFs'].map((label, idx) => (
             <button
               key={label}
               style={{
@@ -35,7 +37,7 @@ function App() {
                 fontSize: 15,
                 cursor: 'pointer',
                 padding: '0 18px',
-                borderBottom: (page === 'quality' && idx === 0) || (page === 'donor-overview' && idx === 1) || (page === 'audit-log' && idx === 4) ? '3px solid #2196f3' : '3px solid transparent',
+                borderBottom: (page === 'quality' && idx === 0) || (page === 'donor-overview' && idx === 1) || (page === 'audit-log' && idx === 4) || (page === 'merge-pdf' && idx === 6) ? '3px solid #2196f3' : '3px solid transparent',
                 fontWeight: 500,
                 height: 48,
                 letterSpacing: 0.2,
@@ -47,6 +49,7 @@ function App() {
                 if (idx === 0) setPage('quality');
                 if (idx === 1) setPage('donor-overview');
                 if (idx === 4) setPage('audit-log');
+                if (idx === 6) setPage('merge-pdf');
               }}
             >
               {label}
@@ -101,8 +104,8 @@ function App() {
                               <span style={{ fontSize: 16, color: '#1976d2' }}>📄</span>
                               <button
                                 style={{
-                                  background: selectedFile === file ? '#e3eafc' : 'none',
-                                  color: selectedFile === file ? '#1976d2' : '#222b36',
+                                  background: selectedFile && selectedFile.agencyIdx === idx && selectedFile.file === file ? '#e3eafc' : 'none',
+                                  color: selectedFile && selectedFile.agencyIdx === idx && selectedFile.file === file ? '#1976d2' : '#222b36',
                                   border: 'none',
                                   width: '100%',
                                   textAlign: 'left',
@@ -110,10 +113,10 @@ function App() {
                                   cursor: 'pointer',
                                   borderRadius: 4,
                                   marginBottom: 2,
-                                  fontWeight: selectedFile === file ? 600 : 400,
+                                  fontWeight: selectedFile && selectedFile.agencyIdx === idx && selectedFile.file === file ? 600 : 400,
                                   fontFamily: 'Inter, Arial, sans-serif',
                                 }}
-                                onClick={() => setSelectedFile(file)}
+                                onClick={() => setSelectedFile({ agencyIdx: idx, file })}
                               >
                                 {file}
                               </button>
@@ -130,7 +133,7 @@ function App() {
           {/* Right Column (80%) */}
           <main style={{ width: '80%', height: '100%', position: 'relative', minWidth: 0, boxSizing: 'border-box', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {selectedFile ? (
-              <PdfTronViewer fileUrl={`/files/${selectedFile}`} />
+              <PdfTronViewer key={`${selectedFile.agencyIdx}-${selectedFile.file}`} fileUrl={`/files/${selectedFile.file}`} />
             ) : (
               <div style={{ color: '#888', fontSize: 22, textAlign: 'center' }}>
                 Select a folder and file from the left panel
@@ -142,6 +145,8 @@ function App() {
         <DonorOverview />
       ) : page === 'audit-log' ? (
         <AuditLog />
+      ) : page === 'merge-pdf' ? (
+        <MergePDF />
       ) : null}
     </div>
   );
