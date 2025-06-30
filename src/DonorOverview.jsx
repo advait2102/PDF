@@ -1,17 +1,56 @@
 import React, { useRef, useState } from 'react';
 import PdfTronViewer from './PdfTronViewer';
 import donorOverviewStyles from './donoroverview.style';
-import { dummyChildGrid, dummyMainGrid } from './model/donoroverview';
+import { dummyMainGrid } from './model/donoroverview';
+import WebViewer from '@pdftron/webviewer';
 
+// Use actual files from public/files
+const fileList = [
+  'Black_Holes.pdf',
+  'Origin_of_Species.pdf',
+  'Special_Relativity.pdf',
+];
+const childGrid = fileList.map((file, idx) => ({ id: 2003671 + idx, document: file }));
+
+// Move PDFTron Core initialization to the very top of the component, so it starts as soon as the component renders
 const DonorOverview = () => {
   const [rowHeight, setRowHeight] = useState(200);
   const isResizing = useRef(false);
-  const [selectedDoc, setSelectedDoc] = useState(dummyChildGrid[0].document);
+  const [selectedDoc, setSelectedDoc] = useState(childGrid[0].document);
   const [showMenu, setShowMenu] = useState(false);
   const [showMergePopup, setShowMergePopup] = useState(false);
   const [mergedFileName, setMergedFileName] = useState('Merged.pdf');
-  const [mergeOrder, setMergeOrder] = useState([...dummyChildGrid.map(f => f.document)]);
+  // Remove Game of Thrones.pdf from initial mergeOrder as well
+  const [mergeOrder, setMergeOrder] = useState([...childGrid.map(f => f.document)]);
   const [mergedFile, setMergedFile] = useState(null);
+  const [mergedUrl, setMergedUrl] = useState(null); // For download link
+  const coreRef = useRef(null);
+  const [coreReady, setCoreReady] = useState(false);
+  const [merging, setMerging] = useState(false);
+  const [mergeError, setMergeError] = useState('');
+  const webviewerDiv = useRef(null); // Add this ref
+
+  // Initialize PDFTron Core immediately on component render
+  React.useLayoutEffect(() => {
+    if (coreRef.current) return; // already initialized
+    if (!webviewerDiv.current) return; // wait for DOM
+    WebViewer(
+      {
+        path: '/webviewer/lib',
+        licenseKey: 'demo:1751037981820:61ad8ba0030000000018b23224b9e0b3b01ad516b33cc8703ca455215c',
+      },
+      webviewerDiv.current // attach to hidden DOM node
+    ).then(instance => {
+      const { Core } = instance;
+      if (Core && Core.setPDFWorkerPath) {
+        Core.setPDFWorkerPath('/webviewer/lib/core/pdf');
+      }
+      coreRef.current = Core;
+      setCoreReady(true);
+    }).catch(e => {
+      setMergeError('Failed to load PDFTron Core: ' + (e.message || e));
+    });
+  }, []);
 
   const handleMouseDown = () => {
     isResizing.current = true;
@@ -58,12 +97,46 @@ const DonorOverview = () => {
     setShowMenu(false);
     setShowMergePopup(true);
   };
-  const handleMergeConfirm = () => {
-    setShowMergePopup(false);
-    setMergedFile(mergedFileName);
-    // Do NOT set selectedDoc to mergedFileName unless the file actually exists
-    // setSelectedDoc(mergedFileName); // <-- Remove this line to prevent PDFTron exception
-    setMergeOrder([mergedFileName, ...mergeOrder]);
+  const handleMergeConfirm = async () => {
+    setMergeError('');
+    setMerging(true);
+    setMergedUrl(null);
+    try {
+      const Core = coreRef.current;
+      if (!Core) throw new Error('PDFTron Core not loaded yet.');
+      // Load all PDFs in the specified order
+      const docs = await Promise.all(mergeOrder.map(async (file, i) => {
+        const url = `/files/${file}`;
+        try {
+          return await Core.createDocument(url, { extension: 'pdf' });
+        } catch (e) {
+          throw new Error('Failed to load file #' + (i+1) + ': ' + (e.message || e));
+        }
+      }));
+      // Merge all docs into the first one (use insertPages(docToInsert, pages, destIndex) like MergePDF)
+      let mergedDoc = docs[0];
+      for (let i = 1; i < docs.length; i++) {
+        const docToInsert = docs[i];
+        const pageCount = await docToInsert.getPageCount();
+        const pages = Array.from({ length: pageCount }, (_, k) => k + 1);
+        await mergedDoc.insertPages(docToInsert, pages, mergedDoc.getPageCount() + 1);
+      }
+      // Get merged file as blob and set download link
+      let data = await mergedDoc.getFileData({
+        downloadType: 'blob',
+        fileType: 'pdf',
+      });
+      if (data instanceof ArrayBuffer) {
+        data = new Uint8Array(data);
+      }
+      const blob = new Blob([data.buffer || data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      setMergedUrl(url);
+    } catch (e) {
+      setMergeError(e.message || String(e));
+    } finally {
+      setMerging(false);
+    }
     // Log the merge event to the audit log (localStorage)
     try {
       let logs = JSON.parse(localStorage.getItem('pdftron-auditlog') || '[]');
@@ -78,11 +151,13 @@ const DonorOverview = () => {
 
   // Files to show in grid
   const filesToShow = mergedFile
-    ? [{ id: 2003671, document: mergedFile }, ...dummyChildGrid]
-    : dummyChildGrid;
+    ? [{ id: 2003671, document: mergedFile }, ...childGrid]
+    : childGrid;
 
   return (
     <div style={donorOverviewStyles.container}>
+      {/* Hidden WebViewer div for PDFTron Core initialization */}
+      <div ref={webviewerDiv} style={{ display: 'none' }} />
       {/* Left Column (50%) */}
       <div style={donorOverviewStyles.leftColumn}>
         {/* Top Row: Child grid only, resizable */}
@@ -126,53 +201,7 @@ const DonorOverview = () => {
                   <tr
                     key={row.id + row.document}
                     style={{ background: selectedDoc === row.document ? '#e3eafc' : 'transparent', cursor: 'pointer', borderRadius: 4, position: 'relative' }}
-                    onClick={() => {
-                      // Only allow selecting real files
-                      if (row.document === mergedFileName && !dummyChildGrid.some(f => f.document === mergedFileName)) {
-                        alert('Merged file does not exist. Please implement merge logic or select a real file.');
-                        return;
-                      }
-                      setSelectedDoc(row.document);
-                    }}
-                    onMouseEnter={e => {
-                      const tooltip = document.createElement('div');
-                      tooltip.className = 'doc-tooltip';
-                      tooltip.style.position = 'fixed';
-                      tooltip.style.left = e.clientX + 20 + 'px';
-                      tooltip.style.top = e.clientY - 20 + 'px';
-                      tooltip.style.background = '#fff';
-                      tooltip.style.color = '#222';
-                      tooltip.style.border = '1px solid #ccc';
-                      tooltip.style.borderRadius = '6px';
-                      tooltip.style.boxShadow = '0 2px 8px #0002';
-                      tooltip.style.padding = '12px 18px';
-                      tooltip.style.zIndex = 2000;
-                      tooltip.innerHTML = `
-                        <div style='font-weight:600;font-size:15px;margin-bottom:8px;'>Document Info</div>
-                        <div>Donor ID: 2003671</div>
-                        <div>Name: ${row.document}</div>
-                        <div>Origin: Mail</div>
-                        <div>Created on: 26-06-2025</div>
-                        <div>Created by: sathish</div>
-                        <div>File Origin: XYZ Agency</div>
-                        <div>OCRed: No</div>
-                        <div>Total pages: 1500</div>
-                      `;
-                      document.body.appendChild(tooltip);
-                      e.target._tooltip = tooltip;
-                    }}
-                    onMouseMove={e => {
-                      if (e.target._tooltip) {
-                        e.target._tooltip.style.left = e.clientX + 20 + 'px';
-                        e.target._tooltip.style.top = e.clientY - 20 + 'px';
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (e.target._tooltip) {
-                        document.body.removeChild(e.target._tooltip);
-                        e.target._tooltip = null;
-                      }
-                    }}
+                    onClick={() => setSelectedDoc(row.document)}
                   >
                     <td style={{ ...donorOverviewStyles.childTdId, color: '#222', paddingRight: 8 }}>{row.id}</td>
                     <td style={{ ...donorOverviewStyles.childTdDoc, paddingLeft: 8 }}>{row.document}</td>
@@ -217,8 +246,7 @@ const DonorOverview = () => {
       <div style={donorOverviewStyles.rightColumn}>
         <div style={{ ...donorOverviewStyles.viewerBox, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'stretch', boxSizing: 'border-box' }}>
           <div style={{ ...donorOverviewStyles.viewerInner, width: '100%', height: '100%', position: 'relative', boxSizing: 'border-box' }}>
-            {/* Only one PdfTronViewer instance, and only render if selectedDoc is set and is a real file */}
-            {selectedDoc && dummyChildGrid.some(f => f.document === selectedDoc) && (
+            {selectedDoc && (
               <PdfTronViewer
                 fileUrl={`/files/${selectedDoc}`}
                 containerStyle={{ width: '100%', height: '100%', position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, maxWidth: '100%', maxHeight: '100%' }}
@@ -263,20 +291,38 @@ const DonorOverview = () => {
                 ))}
               </ul>
             </div>
+            {mergeError && (
+              <div style={{ color: 'red', fontWeight: 500, margin: '16px 0' }}>
+                Error: {mergeError}
+              </div>
+            )}
             <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
               <button
                 onClick={() => setShowMergePopup(false)}
                 style={{ ...donorOverviewStyles.button, background: '#f7f8fa', color: '#222', border: '1px solid #ccc', padding: '10px 20px', borderRadius: 4, cursor: 'pointer', fontSize: 15 }}
               >
-                Cancel
+                Close
               </button>
               <button
                 onClick={handleMergeConfirm}
-                style={{ ...donorOverviewStyles.button, background: '#007bff', color: '#fff', padding: '10px 20px', borderRadius: 4, cursor: 'pointer', fontSize: 15 }}
+                style={{ ...donorOverviewStyles.button, background: '#007bff', color: '#fff', padding: '10px 20px', borderRadius: 4, cursor: coreReady && !merging ? 'pointer' : 'not-allowed', fontSize: 15, opacity: coreReady && !merging ? 1 : 0.6 }}
+                disabled={!coreReady || merging}
               >
-                Confirm Merge
+                {coreReady ? (merging ? 'Merging...' : 'Merge & Generate Link') : 'Loading...'}
               </button>
             </div>
+            {mergedUrl && (
+              <div style={{ marginTop: 18 }}>
+                <a href={mergedUrl} download={mergedFileName.endsWith('.pdf') ? mergedFileName : mergedFileName + '.pdf'} style={{ color: '#1976d2', fontWeight: 600, fontSize: 16 }}>
+                  Download Merged PDF
+                </a>
+              </div>
+            )}
+            {!coreReady && (
+              <div style={{ color: '#1976d2', fontWeight: 500, margin: '12px 0' }}>
+                Initializing PDFTron Core, please wait...
+              </div>
+            )}
           </div>
         </div>
       )}
