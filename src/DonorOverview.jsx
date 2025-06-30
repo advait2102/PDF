@@ -61,8 +61,19 @@ const DonorOverview = () => {
   const handleMergeConfirm = () => {
     setShowMergePopup(false);
     setMergedFile(mergedFileName);
-    setSelectedDoc(mergedFileName);
+    // Do NOT set selectedDoc to mergedFileName unless the file actually exists
+    // setSelectedDoc(mergedFileName); // <-- Remove this line to prevent PDFTron exception
     setMergeOrder([mergedFileName, ...mergeOrder]);
+    // Log the merge event to the audit log (localStorage)
+    try {
+      let logs = JSON.parse(localStorage.getItem('pdftron-auditlog') || '[]');
+      logs.unshift({
+        date: new Date().toLocaleString(),
+        page: '-',
+        event: `Merge Triggered: ${mergedFileName} [${mergeOrder.join(' -> ')}]`
+      });
+      localStorage.setItem('pdftron-auditlog', JSON.stringify(logs));
+    } catch {}
   };
 
   // Files to show in grid
@@ -115,7 +126,14 @@ const DonorOverview = () => {
                   <tr
                     key={row.id + row.document}
                     style={{ background: selectedDoc === row.document ? '#e3eafc' : 'transparent', cursor: 'pointer', borderRadius: 4, position: 'relative' }}
-                    onClick={() => setSelectedDoc(row.document)}
+                    onClick={() => {
+                      // Only allow selecting real files
+                      if (row.document === mergedFileName && !dummyChildGrid.some(f => f.document === mergedFileName)) {
+                        alert('Merged file does not exist. Please implement merge logic or select a real file.');
+                        return;
+                      }
+                      setSelectedDoc(row.document);
+                    }}
                     onMouseEnter={e => {
                       const tooltip = document.createElement('div');
                       tooltip.className = 'doc-tooltip';
@@ -178,7 +196,7 @@ const DonorOverview = () => {
                 <th style={donorOverviewStyles.mainTh}>Type</th>
                 <th style={donorOverviewStyles.mainTh}>Received</th>
                 <th style={donorOverviewStyles.mainTh}>Status</th>
-                <th style={donorOverviewStyles.mainTh}>LastUpdate</th>
+                <th style={{ ...donorOverviewStyles.mainTh }}>LastUpdate</th>
               </tr>
             </thead>
             <tbody>
@@ -199,10 +217,13 @@ const DonorOverview = () => {
       <div style={donorOverviewStyles.rightColumn}>
         <div style={{ ...donorOverviewStyles.viewerBox, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'stretch', boxSizing: 'border-box' }}>
           <div style={{ ...donorOverviewStyles.viewerInner, width: '100%', height: '100%', position: 'relative', boxSizing: 'border-box' }}>
-            <PdfTronViewer
-              fileUrl={'/files/Game of Thrones.pdf'}
-              containerStyle={{ width: '100%', height: '100%', position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, maxWidth: '100%', maxHeight: '100%' }}
-            />
+            {/* Only one PdfTronViewer instance, and only render if selectedDoc is set and is a real file */}
+            {selectedDoc && dummyChildGrid.some(f => f.document === selectedDoc) && (
+              <PdfTronViewer
+                fileUrl={`/files/${selectedDoc}`}
+                containerStyle={{ width: '100%', height: '100%', position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, maxWidth: '100%', maxHeight: '100%' }}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -226,20 +247,35 @@ const DonorOverview = () => {
                 {mergeOrder.map((doc, idx) => (
                   <li
                     key={doc}
-                    style={{ ...donorOverviewStyles.mergeListItem, color: '#222', background: '#fff', border: '1px solid #eee' }}
+                    style={{ ...donorOverviewStyles.mergeListItem, padding: '8px 12px', cursor: 'move', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee' }}
                     draggable
                     onDragStart={e => handleDragStart(e, idx)}
-                    onDrop={e => handleDrop(e, idx)}
                     onDragOver={handleDragOver}
+                    onDrop={e => handleDrop(e, idx)}
                   >
-                    {doc}
+                    <span style={{ color: '#222', fontWeight: 500 }}>{doc}</span>
+                    <span style={{ cursor: 'grab', userSelect: 'none' }} aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 4H14M2 8H14M2 12H14" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24 }}>
-              <button style={{ ...donorOverviewStyles.popupBtn, color: '#222', background: '#fff', border: '1px solid #ccc' }} onClick={() => setShowMergePopup(false)}>Cancel</button>
-              <button style={{ ...donorOverviewStyles.popupBtn, background: '#2a6cff', color: '#fff', marginLeft: 12 }} onClick={handleMergeConfirm}>Merge</button>
+            <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <button
+                onClick={() => setShowMergePopup(false)}
+                style={{ ...donorOverviewStyles.button, background: '#f7f8fa', color: '#222', border: '1px solid #ccc', padding: '10px 20px', borderRadius: 4, cursor: 'pointer', fontSize: 15 }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleMergeConfirm}
+                style={{ ...donorOverviewStyles.button, background: '#007bff', color: '#fff', padding: '10px 20px', borderRadius: 4, cursor: 'pointer', fontSize: 15 }}
+              >
+                Confirm Merge
+              </button>
             </div>
           </div>
         </div>

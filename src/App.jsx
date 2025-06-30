@@ -2,6 +2,7 @@ import { useState } from 'react';
 import './App.css'
 import PdfTronViewer from './PdfTronViewer';
 import DonorOverview from './DonorOverview';
+import AuditLog from './AuditLog';
 
 const agencyFolders = [
   { name: 'Agency 1', locked: true, assigned: false, files: ['Game of Thrones.pdf'] },
@@ -13,7 +14,7 @@ const agencyFolders = [
 function App() {
   const [selectedAgency, setSelectedAgency] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [page, setPage] = useState('quality'); // 'quality' or 'donor-overview'
+  const [page, setPage] = useState('quality'); // 'quality', 'donor-overview', 'audit-log'
 
   return (
     <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -34,7 +35,7 @@ function App() {
                 fontSize: 15,
                 cursor: 'pointer',
                 padding: '0 18px',
-                borderBottom: (page === 'quality' && idx === 0) || (page === 'donor-overview' && idx === 1) ? '3px solid #2196f3' : '3px solid transparent',
+                borderBottom: (page === 'quality' && idx === 0) || (page === 'donor-overview' && idx === 1) || (page === 'audit-log' && idx === 4) ? '3px solid #2196f3' : '3px solid transparent',
                 fontWeight: 500,
                 height: 48,
                 letterSpacing: 0.2,
@@ -45,6 +46,7 @@ function App() {
               onClick={() => {
                 if (idx === 0) setPage('quality');
                 if (idx === 1) setPage('donor-overview');
+                if (idx === 4) setPage('audit-log');
               }}
             >
               {label}
@@ -136,9 +138,11 @@ function App() {
             )}
           </main>
         </div>
-      ) : (
+      ) : page === 'donor-overview' ? (
         <DonorOverview />
-      )}
+      ) : page === 'audit-log' ? (
+        <AuditLog />
+      ) : null}
     </div>
   );
 }

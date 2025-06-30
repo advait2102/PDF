@@ -1,12 +1,12 @@
-# React + Vite
+PDFtron pdf manupulator POC
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Dirty codes inside. Its created just for the POC pupose 
+Copied the main codes from pdftron documentation
+Styles are inspired from pdftron style sheet
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Main Function sourced from 
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+https://docs.apryse.com/web/guides/manipulation/merge
+https://docs.apryse.com/web/guides/annotation/annotationmanager/annotation-alignment
+https://docs.apryse.com/web/guides/events/loading-events
