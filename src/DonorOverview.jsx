@@ -1,25 +1,16 @@
 import React, { useRef, useState } from 'react';
 import PdfTronViewer from './PdfTronViewer';
-
-const dummyChildGrid = [
-  { id: 2003671, document: 'Game of Thrones.pdf' },
-  { id: 2003671, document: 'Auth.pdf' },
-  { id: 2003671, document: 'Some record.pdf' },
-];
-
-const dummyMainGrid = [
-  { Id: '2003671', type: '2-11', Received: '26-06-2025', Status: 'Reviewed', LastUpdate: '27-06-2025' },
-  { Id: '2003672', type: 'T1', Received: '26-06-2025', Status: 'Reviewed', LastUpdate: '27-06-2025' },
-  { Id: '2003673', type: '2-3', Received: '26-06-2025', Status: 'Reviewed', LastUpdate: '27-06-2025' },
-  { Id: '2003674', type: '2-5', Received: '26-06-2025', Status: 'Reviewed', LastUpdate: '27-06-2025' },
-  { Id: '2003675', type: '12-3', Received: '26-06-2025', Status: 'Reviewed', LastUpdate: '27-06-2025' },
-];
+import donorOverviewStyles from './donoroverview.style';
+import { dummyChildGrid, dummyMainGrid } from './model/donoroverview';
 
 const DonorOverview = () => {
-  const [rowHeight, setRowHeight] = useState(260);
+  const [rowHeight, setRowHeight] = useState(200);
   const isResizing = useRef(false);
   const [selectedDoc, setSelectedDoc] = useState(dummyChildGrid[0].document);
   const [showMenu, setShowMenu] = useState(false);
+  const [showMergePopup, setShowMergePopup] = useState(false);
+  const [mergedFileName, setMergedFileName] = useState('Merged.pdf');
+  const [mergeOrder, setMergeOrder] = useState([...dummyChildGrid.map(f => f.document)]);
   const [mergedFile, setMergedFile] = useState(null);
 
   const handleMouseDown = () => {
@@ -32,7 +23,7 @@ const DonorOverview = () => {
   };
   const handleMouseMove = (e) => {
     if (isResizing.current) {
-      const newHeight = Math.max(120, e.clientY - 80);
+      const newHeight = Math.max(100, e.clientY - 80); // 80px header+menu approx
       setRowHeight(newHeight);
     }
   };
@@ -45,14 +36,33 @@ const DonorOverview = () => {
     };
   });
 
+  // Drag and drop for merge order
+  const handleDragStart = (e, idx) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('dragIndex', idx);
+  };
+  const handleDrop = (e, idx) => {
+    const dragIndex = parseInt(e.dataTransfer.getData('dragIndex'), 10);
+    if (dragIndex === idx) return;
+    const newOrder = [...mergeOrder];
+    const [removed] = newOrder.splice(dragIndex, 1);
+    newOrder.splice(idx, 0, removed);
+    setMergeOrder(newOrder);
+  };
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
   // Merge handler
-  const handleMerge = async () => {
+  const handleMerge = () => {
     setShowMenu(false);
-    const fileName = window.prompt('Enter a name for the merged file:', 'Merged.pdf');
-    if (!fileName) return;
-    // Simulate merge: just add a new file to the grid
-    setMergedFile(fileName);
-    setSelectedDoc(fileName);
+    setShowMergePopup(true);
+  };
+  const handleMergeConfirm = () => {
+    setShowMergePopup(false);
+    setMergedFile(mergedFileName);
+    setSelectedDoc(mergedFileName);
+    setMergeOrder([mergedFileName, ...mergeOrder]);
   };
 
   // Files to show in grid
@@ -61,100 +71,179 @@ const DonorOverview = () => {
     : dummyChildGrid;
 
   return (
-    <div style={{ width: '100%', height: '100%', background: '#f9f9f9', display: 'flex', flexDirection: 'column' }}>
-      {/* First Row: 3 columns, resizable */}
-      <div style={{ display: 'flex', width: '100%', minHeight: 120, height: rowHeight, transition: 'height 0.1s', background: '#fff', boxShadow: '0 2px 8px #0001', borderRadius: 8, margin: 24, marginBottom: 0, overflow: 'hidden' }}>
-        {/* 1st col: Child grid */}
-        <div style={{ flex: '0 0 30%', borderRight: '1px solid #eee', padding: 16, minWidth: 120, overflow: 'auto' }}>
-          <table style={{ width: '100%', fontSize: 14, marginTop: 0, background: '#fff', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: '#111' }}>
-                <th style={{ textAlign: 'left', padding: 8, color: '#fff', fontWeight: 700, width: 40 }}>#</th>
-                <th style={{ textAlign: 'left', padding: 8, color: '#fff', fontWeight: 700, position: 'relative' }}>
-                  <span>Document</span>
-                  <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}>
-                    <button
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                      onClick={() => setShowMenu((v) => !v)}
-                      title="Settings"
+    <div style={donorOverviewStyles.container}>
+      {/* Left Column (50%) */}
+      <div style={donorOverviewStyles.leftColumn}>
+        {/* Top Row: Child grid only, resizable */}
+        <div style={{ ...donorOverviewStyles.topRow, height: rowHeight, display: 'block' }}>
+          {/* Child grid */}
+          <div style={{ ...donorOverviewStyles.childGrid, width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8, position: 'relative' }}>
+              <span style={{ fontWeight: 600, fontSize: 15, color: '#222', flex: 1 }}>Child Documents</span>
+              <div style={{ position: 'relative', left: '-15px' }}>
+                <button
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, padding: 4, color: '#222' }}
+                  onClick={() => setShowMenu((v) => !v)}
+                  aria-label="Settings"
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="10" cy="10" r="9" stroke="#222" strokeWidth="2" fill="#222" />
+                    <path d="M10 6V10L12.5 12.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                {showMenu && (
+                  <div style={{ position: 'absolute', right: 0, top: 28, background: '#fff', border: '1px solid #eee', borderRadius: 6, boxShadow: '0 2px 8px #0002', zIndex: 10 }}>
+                    <div
+                      style={{ padding: '10px 24px', cursor: 'pointer', fontSize: 15, color: '#222', whiteSpace: 'nowrap' }}
+                      onClick={handleMerge}
                     >
-                      <span style={{ fontSize: 20, color: '#fff', background: '#111', borderRadius: '50%', padding: 4 }}>⚙️</span>
-                    </button>
-                    {showMenu && (
-                      <div style={{ position: 'absolute', top: 28, right: 0, background: '#fff', border: '1px solid #ccc', borderRadius: 6, boxShadow: '0 2px 8px #0002', zIndex: 10 }}>
-                        <button
-                          style={{ background: 'none', border: 'none', color: '#111', fontWeight: 600, padding: '10px 24px', cursor: 'pointer', width: '100%', textAlign: 'left' }}
-                          onClick={handleMerge}
-                        >
-                          Merge
-                        </button>
-                      </div>
-                    )}
-                  </span>
-                </th>
+                      <span style={{ fontWeight: 600, color: '#222' }}>Merge</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <table style={donorOverviewStyles.childTable}>
+              <thead>
+                <tr>
+                  <th style={{ ...donorOverviewStyles.childThId, color: '#222', paddingRight: 8 }}>#</th>
+                  <th style={{ ...donorOverviewStyles.childThDoc, paddingLeft: 8 }}>Document</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filesToShow.map((row) => (
+                  <tr
+                    key={row.id + row.document}
+                    style={{ background: selectedDoc === row.document ? '#e3eafc' : 'transparent', cursor: 'pointer', borderRadius: 4, position: 'relative' }}
+                    onClick={() => setSelectedDoc(row.document)}
+                    onMouseEnter={e => {
+                      const tooltip = document.createElement('div');
+                      tooltip.className = 'doc-tooltip';
+                      tooltip.style.position = 'fixed';
+                      tooltip.style.left = e.clientX + 20 + 'px';
+                      tooltip.style.top = e.clientY - 20 + 'px';
+                      tooltip.style.background = '#fff';
+                      tooltip.style.color = '#222';
+                      tooltip.style.border = '1px solid #ccc';
+                      tooltip.style.borderRadius = '6px';
+                      tooltip.style.boxShadow = '0 2px 8px #0002';
+                      tooltip.style.padding = '12px 18px';
+                      tooltip.style.zIndex = 2000;
+                      tooltip.innerHTML = `
+                        <div style='font-weight:600;font-size:15px;margin-bottom:8px;'>Document Info</div>
+                        <div>Donor ID: 2003671</div>
+                        <div>Name: ${row.document}</div>
+                        <div>Origin: Mail</div>
+                        <div>Created on: 26-06-2025</div>
+                        <div>Created by: sathish</div>
+                        <div>File Origin: XYZ Agency</div>
+                        <div>OCRed: No</div>
+                        <div>Total pages: 1500</div>
+                      `;
+                      document.body.appendChild(tooltip);
+                      e.target._tooltip = tooltip;
+                    }}
+                    onMouseMove={e => {
+                      if (e.target._tooltip) {
+                        e.target._tooltip.style.left = e.clientX + 20 + 'px';
+                        e.target._tooltip.style.top = e.clientY - 20 + 'px';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (e.target._tooltip) {
+                        document.body.removeChild(e.target._tooltip);
+                        e.target._tooltip = null;
+                      }
+                    }}
+                  >
+                    <td style={{ ...donorOverviewStyles.childTdId, color: '#222', paddingRight: 8 }}>{row.id}</td>
+                    <td style={{ ...donorOverviewStyles.childTdDoc, paddingLeft: 8 }}>{row.document}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {/* Row Resize Handle */}
+        <div
+          style={donorOverviewStyles.rowResizeHandle}
+          onMouseDown={handleMouseDown}
+        />
+        {/* Bottom Row: Main grid */}
+        <div style={donorOverviewStyles.mainGridBox}>
+          <table style={donorOverviewStyles.mainTable}>
+            <thead>
+              <tr>
+                <th style={donorOverviewStyles.mainTh}>Id</th>
+                <th style={donorOverviewStyles.mainTh}>Type</th>
+                <th style={donorOverviewStyles.mainTh}>Received</th>
+                <th style={donorOverviewStyles.mainTh}>Status</th>
+                <th style={donorOverviewStyles.mainTh}>LastUpdate</th>
               </tr>
             </thead>
             <tbody>
-              {filesToShow.map((row) => (
-                <tr key={row.id + row.document} style={{ background: selectedDoc === row.document ? '#e3eafc' : '#fff', cursor: 'pointer' }} onClick={() => setSelectedDoc(row.document)}>
-                  <td style={{ padding: 8, color: '#111' }}>{row.id}</td>
-                  <td style={{ padding: 8, color: '#111' }}>{row.document}</td>
+              {dummyMainGrid.map((row, idx) => (
+                <tr key={idx} style={donorOverviewStyles.mainTr}>
+                  <td style={donorOverviewStyles.mainTd}>{row.Id}</td>
+                  <td style={donorOverviewStyles.mainTd}>{row.type}</td>
+                  <td style={donorOverviewStyles.mainTd}>{row.Received}</td>
+                  <td style={donorOverviewStyles.mainTd}>{row.Status}</td>
+                  <td style={{ ...donorOverviewStyles.mainTd, fontWeight: 600 }}>{row.LastUpdate}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        {/* 2nd col: Info */}
-        <div style={{ flex: '0 0 20%', borderRight: '1px solid #eee', padding: 16, minWidth: 100, overflow: 'auto' }}>
-          <h4 style={{ margin: 0, background: '#111', color: '#fff', fontWeight: 700, textAlign: 'left', padding: 8, borderRadius: 4 }}>Document Info</h4>
-          <div style={{ margin: '8px 0', color: '#111', fontWeight: 500 }}>Donor ID: 2003671</div>
-          <div style={{ margin: '8px 0', color: '#111', fontWeight: 500 }}>Name: {selectedDoc}</div>
-          <div style={{ margin: '8px 0', color: '#111', fontWeight: 500 }}>Origin: Mail</div>
-          <div style={{ margin: '8px 0', color: '#111', fontWeight: 500 }}>Created on: 26-06-2025</div>
-            <div style={{ margin: '8px 0', color: '#111', fontWeight: 500 }}>Created by: sathish</div>
-          <div style={{ margin: '8px 0', color: '#111', fontWeight: 500 }}>File Origin: XYZ Agency</div>
-          <div style={{ margin: '8px 0', color: '#111', fontWeight: 500 }}>OCRed: No</div>
-          <div style={{ margin: '8px 0', color: '#111', fontWeight: 500 }}>Total pages: 1500</div>
-        </div>
-        {/* 3rd col: PDFTron area */}
-        <div style={{ flex: '0 0 50%', maxWidth: '50%', padding: 16, minWidth: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
-          <div style={{ width: '100%', height: '320px', minHeight: 120, background: '#222', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxSizing: 'border-box', overflow: 'hidden' }}>
-            <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-              <PdfTronViewer fileUrl={'/files/Game of Thrones.pdf'} />
-            </div>
+      </div>
+      {/* Right Column (50%): PDFTron full height */}
+      <div style={donorOverviewStyles.rightColumn}>
+        <div style={{ ...donorOverviewStyles.viewerBox, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'stretch', boxSizing: 'border-box' }}>
+          <div style={{ ...donorOverviewStyles.viewerInner, width: '100%', height: '100%', position: 'relative', boxSizing: 'border-box' }}>
+            <PdfTronViewer
+              fileUrl={'/files/Game of Thrones.pdf'}
+              containerStyle={{ width: '100%', height: '100%', position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, maxWidth: '100%', maxHeight: '100%' }}
+            />
           </div>
         </div>
       </div>
-      {/* Row Resize Handle */}
-      <div
-        style={{ height: 8, cursor: 'row-resize', background: '#e0e0e0', width: 'calc(100% - 48px)', margin: '0 24px', borderRadius: 4, zIndex: 2 }}
-        onMouseDown={handleMouseDown}
-      />
-      {/* Second Row: Full width/height grid, no heading */}
-      <div style={{ flex: 1, background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #0001', margin: 24, marginTop: 0, overflow: 'auto', padding: 24, minHeight: 120 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 0, background: '#fff' }}>
-          <thead>
-            <tr style={{ background: '#111' }}>
-              <th style={{ padding: 12, border: '1px solid #e0e0e0', color: '#fff', fontWeight: 700 }}>Id</th>
-              <th style={{ padding: 12, border: '1px solid #e0e0e0', color: '#fff', fontWeight: 700 }}>Type</th>
-              <th style={{ padding: 12, border: '1px solid #e0e0e0', color: '#fff', fontWeight: 700 }}>Received</th>
-              <th style={{ padding: 12, border: '1px solid #e0e0e0', color: '#fff', fontWeight: 700 }}>Status</th>
-              <th style={{ padding: 12, border: '1px solid #e0e0e0', color: '#fff', fontWeight: 700 }}>LastUpdate</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dummyMainGrid.map((row, idx) => (
-              <tr key={idx}>
-                <td style={{ padding: 10, border: '1px solid #e0e0e0', color: '#111' }}>{row.Id}</td>
-                <td style={{ padding: 10, border: '1px solid #e0e0e0', color: '#111' }}>{row.type}</td>
-                <td style={{ padding: 10, border: '1px solid #e0e0e0', color: '#111' }}>{row.Received}</td>
-                <td style={{ padding: 10, border: '1px solid #e0e0e0', color: '#111' }}>{row.Status}</td>
-                <td style={{ padding: 10, border: '1px solid #e0e0e0', color: '#111', fontWeight: 600 }}>{row.LastUpdate}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Merge Popup */}
+      {showMergePopup && (
+        <div style={{ ...donorOverviewStyles.popupOverlay, zIndex: 1000, background: 'rgba(0,0,0,0.25)', position: 'fixed', left: 0, top: 0, width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ ...donorOverviewStyles.popupBox, background: '#fff', color: '#222', boxShadow: '0 4px 24px #0003', minWidth: 400, maxWidth: '90vw', maxHeight: '90vh', overflow: 'auto' }}>
+            <div style={{ ...donorOverviewStyles.popupTitle, color: '#222' }}>Merge Documents</div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontWeight: 500, fontSize: 15, color: '#222' }}>Merged File Name:</label>
+              <input
+                type="text"
+                value={mergedFileName}
+                onChange={e => setMergedFileName(e.target.value)}
+                style={{ ...donorOverviewStyles.inputBox, color: '#222', background: '#f7f8fa', border: '1px solid #ccc' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontWeight: 500, fontSize: 15, color: '#222' }}>Order Files (drag to reorder):</label>
+              <ul style={{ ...donorOverviewStyles.mergeListBox, background: '#f7f8fa', border: '1px solid #eee' }}>
+                {mergeOrder.map((doc, idx) => (
+                  <li
+                    key={doc}
+                    style={{ ...donorOverviewStyles.mergeListItem, color: '#222', background: '#fff', border: '1px solid #eee' }}
+                    draggable
+                    onDragStart={e => handleDragStart(e, idx)}
+                    onDrop={e => handleDrop(e, idx)}
+                    onDragOver={handleDragOver}
+                  >
+                    {doc}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24 }}>
+              <button style={{ ...donorOverviewStyles.popupBtn, color: '#222', background: '#fff', border: '1px solid #ccc' }} onClick={() => setShowMergePopup(false)}>Cancel</button>
+              <button style={{ ...donorOverviewStyles.popupBtn, background: '#2a6cff', color: '#fff', marginLeft: 12 }} onClick={handleMergeConfirm}>Merge</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -22,41 +22,34 @@ function App() {
         Experion POC
       </header>
       {/* Menu Bar */}
-      <nav style={{ width: '100%', background: '#1565c0', color: '#fff', display: 'flex', alignItems: 'center', padding: '0 24px', height: 48, boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', gap: 32 }}>
-          <button
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#fff',
-              fontSize: 16,
-              cursor: 'pointer',
-              padding: '0 8px',
-              borderBottom: page === 'quality' ? '2px solid #fff' : 'none',
-              fontWeight: 600
-            }}
-            onClick={() => setPage('quality')}
-          >
-            QA/QC
-          </button>
-          <button
-            style={{ background: 'none', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', padding: '0 8px', borderBottom: page === 'donor-overview' ? '2px solid #fff' : 'none', fontWeight: 600 }}
-            onClick={() => setPage('donor-overview')}
-          >
-            Donor Overview
-          </button>
-          <button style={{ background: 'none', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', padding: '0 8px' }}>
-            OCR
-          </button>
-          <button style={{ background: 'none', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', padding: '0 8px' }}>
-            Archived Donors
-          </button>
-          <button style={{ background: 'none', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', padding: '0 8px' }}>
-            Audit logs
-          </button>
-          <button style={{ background: 'none', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', padding: '0 8px' }}>
-            Track your files
-          </button>
+      <nav style={{ width: '100%', background: '#1565c0', color: '#fff', display: 'flex', alignItems: 'center', padding: '0 24px', height: 48, boxSizing: 'border-box', borderBottom: '1px solid #e0e0e0' }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {['QA/QC', 'Donor Overview', 'OCR', 'Archived Donors', 'Audit logs', 'Track your files'].map((label, idx) => (
+            <button
+              key={label}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#fff',
+                fontSize: 15,
+                cursor: 'pointer',
+                padding: '0 18px',
+                borderBottom: (page === 'quality' && idx === 0) || (page === 'donor-overview' && idx === 1) ? '3px solid #2196f3' : '3px solid transparent',
+                fontWeight: 500,
+                height: 48,
+                letterSpacing: 0.2,
+                outline: 'none',
+                transition: 'border-bottom 0.2s',
+                fontFamily: 'Inter, Arial, sans-serif',
+              }}
+              onClick={() => {
+                if (idx === 0) setPage('quality');
+                if (idx === 1) setPage('donor-overview');
+              }}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </nav>
       {/* Main Content */}
@@ -64,13 +57,13 @@ function App() {
         <div style={{ flex: 1, display: 'flex', minHeight: 0, minWidth: 0, overflow: 'hidden' }}>
           {/* Left Column (20%) */}
           <aside style={{ width: '20%', background: '#f5f5f5', borderRight: '1px solid #e0e0e0', padding: 0, minWidth: 0, boxSizing: 'border-box', overflowY: 'auto' }}>
-            <div style={{ padding: 16 }}>
-              <h4 style={{ background: '#111', color: '#fff', fontWeight: 700, padding: 8, borderRadius: 4, margin: 0, marginBottom: 16 }}>Agencies</h4>
+            <div style={{ padding: 0 }}>
+              <h4 style={{ background: '#222b36', color: '#fff', fontWeight: 600, fontSize: 13, letterSpacing: 0.2, padding: '18px 0 12px 24px', margin: 0, borderBottom: '1px solid #e0e0e0', fontFamily: 'Inter, Arial, sans-serif' }}>Agencies</h4>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                 {agencyFolders.map((agency, idx) => (
                   <li key={agency.name}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 22, marginRight: 8 }}>📁</span>
+                      <span style={{ fontSize: 20, marginRight: 8, color: agency.locked ? '#1976d2' : '#b0b0b0' }}>📁</span>
                       <button
                         disabled={!agency.locked}
                         onClick={() => {
@@ -82,13 +75,16 @@ function App() {
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: agency.locked ? '#1976d2' : '#aaa',
-                          fontWeight: 600,
-                          fontSize: 16,
+                          color: agency.locked ? '#222b36' : '#b0b0b0',
+                          fontWeight: 500,
+                          fontSize: 15,
                           cursor: agency.locked ? 'pointer' : 'not-allowed',
                           textAlign: 'left',
-                          padding: 0,
-                          opacity: agency.locked ? 1 : 0.5
+                          padding: '8px 0 8px 0',
+                          width: '100%',
+                          borderRadius: 0,
+                          outline: 'none',
+                          fontFamily: 'Inter, Arial, sans-serif',
                         }}
                       >
                         {agency.name} {agency.locked ? '(locked for you)' : '(Assigned to different user)'}
@@ -100,11 +96,11 @@ function App() {
                         {agency.files.map((file) => (
                           <li key={file}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontSize: 18 }}>📄</span>
+                              <span style={{ fontSize: 16, color: '#1976d2' }}>📄</span>
                               <button
                                 style={{
-                                  background: selectedFile === file ? '#1976d2' : 'none',
-                                  color: selectedFile === file ? '#fff' : '#1976d2',
+                                  background: selectedFile === file ? '#e3eafc' : 'none',
+                                  color: selectedFile === file ? '#1976d2' : '#222b36',
                                   border: 'none',
                                   width: '100%',
                                   textAlign: 'left',
@@ -112,7 +108,8 @@ function App() {
                                   cursor: 'pointer',
                                   borderRadius: 4,
                                   marginBottom: 2,
-                                  fontWeight: selectedFile === file ? 600 : 400
+                                  fontWeight: selectedFile === file ? 600 : 400,
+                                  fontFamily: 'Inter, Arial, sans-serif',
                                 }}
                                 onClick={() => setSelectedFile(file)}
                               >
