@@ -1,16 +1,17 @@
 import React, { useRef, useState } from 'react';
 import PdfTronViewer from './PdfTronViewer';
 import donorOverviewStyles from './donoroverview.style';
-import { dummyMainGrid } from './model/donoroverview';
+import { dummyMainGrid, dummyChildGrid } from './model/donoroverview';
 import WebViewer from '@pdftron/webviewer';
 
 // Use actual files from public/files
-const fileList = [
-  'Black_Holes.pdf',
-  'Origin_of_Species.pdf',
-  'Special_Relativity.pdf',
-];
-const childGrid = fileList.map((file) => ({ id: 2003671, document: file }));
+// const fileList = [
+//   'Black_Holes.pdf',
+//   'Origin_of_Species.pdf',
+//   'Special_Relativity.pdf',
+// ];
+// const childGrid = fileList.map((file) => ({ id: 2003671, document: file }));
+const childGrid = dummyChildGrid;
 
 // Move PDFTron Core initialization to the very top of the component, so it starts as soon as the component renders
 const DonorOverview = () => {
@@ -219,6 +220,7 @@ const DonorOverview = () => {
                 <tr>
                   <th style={{ ...donorOverviewStyles.childThId, color: '#222', paddingRight: 8 }}>#</th>
                   <th style={{ ...donorOverviewStyles.childThDoc, paddingLeft: 8 }}>Document</th>
+                  <th style={{ ...donorOverviewStyles.childThDoc, paddingLeft: 8 }}>Type</th>
                 </tr>
               </thead>
               <tbody>
@@ -230,6 +232,7 @@ const DonorOverview = () => {
                   >
                     <td style={{ ...donorOverviewStyles.childTdId, color: '#222', paddingRight: 8 }}>{row.id}</td>
                     <td style={{ ...donorOverviewStyles.childTdDoc, paddingLeft: 8 }}>{row.document}</td>
+                    <td style={{ ...donorOverviewStyles.childTdDoc, paddingLeft: 8 }}>{row.Type}</td>
                   </tr>
                 ))}
               </tbody>
@@ -248,7 +251,7 @@ const DonorOverview = () => {
             <thead>
               <tr>
                 <th style={donorOverviewStyles.mainTh}>Id</th>
-                <th style={donorOverviewStyles.mainTh}>Type</th>
+                <th style={donorOverviewStyles.mainTh}>Created by</th>
                 <th style={donorOverviewStyles.mainTh}>Received</th>
                 <th style={donorOverviewStyles.mainTh}>Status</th>
                 <th style={{ ...donorOverviewStyles.mainTh }}>LastUpdate</th>
@@ -258,7 +261,7 @@ const DonorOverview = () => {
               {dummyMainGrid.map((row, idx) => (
                 <tr key={idx} style={donorOverviewStyles.mainTr}>
                   <td style={donorOverviewStyles.mainTd}>{row.Id}</td>
-                  <td style={donorOverviewStyles.mainTd}>{row.type}</td>
+                  <td style={donorOverviewStyles.mainTd}>{row.Createdby}</td>
                   <td style={donorOverviewStyles.mainTd}>{row.Received}</td>
                   <td style={donorOverviewStyles.mainTd}>{row.Status}</td>
                   <td style={{ ...donorOverviewStyles.mainTd, fontWeight: 600 }}>{row.LastUpdate}</td>
