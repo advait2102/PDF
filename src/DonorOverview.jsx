@@ -243,6 +243,7 @@ const DonorOverview = () => {
         />
         {/* Bottom Row: Main grid */}
         <div style={donorOverviewStyles.mainGridBox}>
+          <div style={{ fontWeight: 700, fontSize: 20, color: '#222', margin: '12px 0 8px 0', textAlign: 'left' }}>Donor overview</div>
           <table style={donorOverviewStyles.mainTable}>
             <thead>
               <tr>
