@@ -3,24 +3,30 @@
 
 const donorOverviewStyles = {
   container: {
-    width: '100%',
-    height: '100%',
+    width: '100vw',
+    height: '100vh',
     background: '#f9f9f9',
     display: 'flex',
     flexDirection: 'row',
+    margin: 0,
+    padding: 0,
+    overflow: 'hidden',
   },
   leftColumn: {
     width: '50%',
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
+    margin: 0,
+    padding: 0,
+    boxSizing: 'border-box',
   },
   topRow: {
     height: undefined, // dynamic
     minHeight: 100,
     background: '#fff',
     borderRadius: 8,
-    margin: 24,
+    margin: 12,
     marginBottom: 0,
     boxShadow: '0 2px 8px #0001',
     overflow: 'hidden',
@@ -118,7 +124,7 @@ const donorOverviewStyles = {
     background: '#fff',
     borderRadius: 8,
     boxShadow: '0 2px 8px #0001',
-    margin: 24,
+    margin: 12,
     marginTop: 0,
     overflow: 'auto',
     padding: 0,
@@ -157,10 +163,11 @@ const donorOverviewStyles = {
   rightColumn: {
     width: '50%',
     height: '100%',
-    padding: 12, // Reduced padding between columns
+    padding: 12,
     boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
+    margin: 0,
   },
   pdfContainer: {
     flex: 1,

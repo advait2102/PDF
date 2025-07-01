@@ -10,7 +10,7 @@ const fileList = [
   'Origin_of_Species.pdf',
   'Special_Relativity.pdf',
 ];
-const childGrid = fileList.map((file, idx) => ({ id: 2003671 + idx, document: file }));
+const childGrid = fileList.map((file) => ({ id: 2003671, document: file }));
 
 // Move PDFTron Core initialization to the very top of the component, so it starts as soon as the component renders
 const DonorOverview = () => {
@@ -57,8 +57,10 @@ const DonorOverview = () => {
     });
 
     return () => {
-      if (coreRef.current) {
+      if (coreRef.current && typeof coreRef.current.dispose === 'function') {
         coreRef.current.dispose(); // Cleanup on unmount
+        coreRef.current = null;
+      } else {
         coreRef.current = null;
       }
     };
