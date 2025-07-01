@@ -32,8 +32,13 @@ const DonorOverview = () => {
 
   // Initialize PDFTron Core immediately on component render
   React.useLayoutEffect(() => {
-    if (coreRef.current) return; // already initialized
+    if (coreRef.current) {
+      coreRef.current.dispose(); // Dispose of existing instance
+      coreRef.current = null;
+    }
+
     if (!webviewerDiv.current) return; // wait for DOM
+
     WebViewer(
       {
         path: '/webviewer/lib',
@@ -48,8 +53,15 @@ const DonorOverview = () => {
       coreRef.current = Core;
       setCoreReady(true);
     }).catch(e => {
-      setMergeError('Failed to load PDFTron Core: ' + (e.message || e));
+      console.error('Error initializing WebViewer:', e);
     });
+
+    return () => {
+      if (coreRef.current) {
+        coreRef.current.dispose(); // Cleanup on unmount
+        coreRef.current = null;
+      }
+    };
   }, []);
 
   const handleMouseDown = () => {
@@ -166,15 +178,26 @@ const DonorOverview = () => {
           <div style={{ ...donorOverviewStyles.childGrid, width: '100%' }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8, position: 'relative' }}>
               <span style={{ fontWeight: 600, fontSize: 15, color: '#222', flex: 1 }}>Documents available for 2003671 </span>
-              <div style={{ position: 'relative', left: '-15px' }}>
+              <div style={{ position: 'relative', left: '-10px' }}>
                 <button
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, padding: 4, color: '#222' }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, padding: '2px', color: '#222', borderRadius: '50%' }}
                   onClick={() => setShowMenu((v) => !v)}
                   aria-label="Settings"
                 >
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="10" cy="10" r="9" stroke="#222" strokeWidth="2" fill="#222" />
-                    <path d="M10 6V10L12.5 12.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="feather feather-settings"
+                  >
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                   </svg>
                 </button>
                 {showMenu && (
@@ -244,12 +267,12 @@ const DonorOverview = () => {
       </div>
       {/* Right Column (50%): PDFTron full height */}
       <div style={donorOverviewStyles.rightColumn}>
-        <div style={{ ...donorOverviewStyles.viewerBox, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'stretch', boxSizing: 'border-box' }}>
+        <div style={donorOverviewStyles.pdfContainer}>
           <div style={{ ...donorOverviewStyles.viewerInner, width: '100%', height: '100%', position: 'relative', boxSizing: 'border-box' }}>
-            {selectedDoc && (
+            {selectedDoc && !document.querySelector('.webviewer') && (
               <PdfTronViewer
                 fileUrl={`/files/${selectedDoc}`}
-                containerStyle={{ width: '100%', height: '100%', position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, maxWidth: '100%', maxHeight: '100%' }}
+                containerStyle={{ width: '100%', height: '100%', position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, margin: 0, padding: 0, overflow: 'hidden', boxSizing: 'border-box' }}
               />
             )}
           </div>
@@ -258,20 +281,20 @@ const DonorOverview = () => {
       {/* Merge Popup */}
       {showMergePopup && (
         <div style={{ ...donorOverviewStyles.popupOverlay, zIndex: 1000, background: 'rgba(0,0,0,0.25)', position: 'fixed', left: 0, top: 0, width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ ...donorOverviewStyles.popupBox, background: '#fff', color: '#222', boxShadow: '0 4px 24px #0003', minWidth: 400, maxWidth: '90vw', maxHeight: '90vh', overflow: 'auto' }}>
-            <div style={{ ...donorOverviewStyles.popupTitle, color: '#222' }}>Merge Documents</div>
+          <div style={{ ...donorOverviewStyles.popupBox, background: '#f9f9f9', color: '#333', boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)', borderRadius: 8, padding: 24, minWidth: 400, maxWidth: '90vw', maxHeight: '90vh', overflow: 'auto' }}>
+            <div style={{ ...donorOverviewStyles.popupTitle, color: '#333', fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Merge Documents</div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontWeight: 500, fontSize: 15, color: '#222' }}>Merged File Name:</label>
+              <label style={{ fontWeight: 500, fontSize: 14, color: '#555', display: 'block', marginBottom: 8 }}>Merged File Name:</label>
               <input
                 type="text"
                 value={mergedFileName}
                 onChange={e => setMergedFileName(e.target.value)}
-                style={{ ...donorOverviewStyles.inputBox, color: '#222', background: '#f7f8fa', border: '1px solid #ccc' }}
+                style={{ ...donorOverviewStyles.inputBox, color: '#333', background: '#fff', border: '1px solid #ccc', borderRadius: 4, padding: '8px 12px', width: '100%' }}
               />
             </div>
             <div>
-              <label style={{ fontWeight: 500, fontSize: 15, color: '#222' }}>Order Files (drag to reorder):</label>
-              <ul style={{ ...donorOverviewStyles.mergeListBox, background: '#f7f8fa', border: '1px solid #eee' }}>
+              <label style={{ fontWeight: 500, fontSize: 14, color: '#555', display: 'block', marginBottom: 8 }}>Order Files (drag to reorder):</label>
+              <ul style={{ ...donorOverviewStyles.mergeListBox, background: '#fff', border: '1px solid #ddd', borderRadius: 4, padding: 0, listStyle: 'none', margin: 0 }}>
                 {mergeOrder.map((doc, idx) => (
                   <li
                     key={doc}
@@ -281,10 +304,10 @@ const DonorOverview = () => {
                     onDragOver={handleDragOver}
                     onDrop={e => handleDrop(e, idx)}
                   >
-                    <span style={{ color: '#222', fontWeight: 500 }}>{doc}</span>
+                    <span style={{ color: '#333', fontWeight: 500 }}>{doc}</span>
                     <span style={{ cursor: 'grab', userSelect: 'none' }} aria-hidden="true">
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M2 4H14M2 8H14M2 12H14" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M2 4H14M2 8H14M2 12H14" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </span>
                   </li>
@@ -299,13 +322,13 @@ const DonorOverview = () => {
             <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
               <button
                 onClick={() => setShowMergePopup(false)}
-                style={{ ...donorOverviewStyles.button, background: '#f7f8fa', color: '#222', border: '1px solid #ccc', padding: '10px 20px', borderRadius: 4, cursor: 'pointer', fontSize: 15 }}
+                style={{ ...donorOverviewStyles.button, background: '#f1f1f1', color: '#333', border: '1px solid #ccc', padding: '10px 20px', borderRadius: 4, cursor: 'pointer', fontSize: 14 }}
               >
                 Close
               </button>
               <button
                 onClick={handleMergeConfirm}
-                style={{ ...donorOverviewStyles.button, background: '#007bff', color: '#fff', padding: '10px 20px', borderRadius: 4, cursor: coreReady && !merging ? 'pointer' : 'not-allowed', fontSize: 15, opacity: coreReady && !merging ? 1 : 0.6 }}
+                style={{ ...donorOverviewStyles.button, background: '#007bff', color: '#fff', padding: '10px 20px', borderRadius: 4, cursor: coreReady && !merging ? 'pointer' : 'not-allowed', fontSize: 14, opacity: coreReady && !merging ? 1 : 0.6 }}
                 disabled={!coreReady || merging}
               >
                 {coreReady ? (merging ? 'Merging...' : 'Merge & Generate Link') : 'Loading...'}
@@ -313,13 +336,13 @@ const DonorOverview = () => {
             </div>
             {mergedUrl && (
               <div style={{ marginTop: 18 }}>
-                <a href={mergedUrl} download={mergedFileName.endsWith('.pdf') ? mergedFileName : mergedFileName + '.pdf'} style={{ color: '#1976d2', fontWeight: 600, fontSize: 16 }}>
+                <a href={mergedUrl} download={mergedFileName.endsWith('.pdf') ? mergedFileName : mergedFileName + '.pdf'} style={{ color: '#007bff', fontWeight: 600, fontSize: 14 }}>
                   Download Merged PDF
                 </a>
               </div>
             )}
             {!coreReady && (
-              <div style={{ color: '#1976d2', fontWeight: 500, margin: '12px 0' }}>
+              <div style={{ color: '#007bff', fontWeight: 500, margin: '12px 0' }}>
                 Initializing PDFTron Core, please wait...
               </div>
             )}

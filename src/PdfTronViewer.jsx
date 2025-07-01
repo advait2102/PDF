@@ -19,9 +19,23 @@ function saveAuditLog(event) {
 
 const PdfTronViewer = ({ fileUrl }) => {
   const viewer = useRef(null);
+  const instanceRef = useRef(null); // Ref to store the WebViewer instance
 
   useEffect(() => {
     if (!fileUrl) return;
+
+    // Cleanup any existing instance before creating a new one
+    if (instanceRef.current) {
+      instanceRef.current.UI.dispose();
+      instanceRef.current = null;
+    }
+    // Remove all child nodes from the viewer container
+    if (viewer.current) {
+      while (viewer.current.firstChild) {
+        viewer.current.removeChild(viewer.current.firstChild);
+      }
+    }
+
     WebViewer(
       {
         path: "/webviewer/lib",
@@ -30,6 +44,8 @@ const PdfTronViewer = ({ fileUrl }) => {
       },
       viewer.current
     ).then((instance) => {
+      instanceRef.current = instance; // Store the instance in the ref
+
       // Listen for page changes
       instance.Core.documentViewer.addEventListener('pageNumberUpdated', (page) => {
         saveAuditLog({ date: new Date().toLocaleString(), page, event: 'Page Changed' });
@@ -99,12 +115,52 @@ const PdfTronViewer = ({ fileUrl }) => {
           });
         });
       }
+      // Listen for button clicks
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(button => {
+        button.addEventListener('click', () => {
+          saveAuditLog({ date: new Date().toLocaleString(), event: `Button Clicked (${button.innerText || 'Unnamed Button'})` });
+        });
+      });
+
+      // Listen for navigation events
+      instance.UI.addEventListener('tabSelected', (tab) => {
+        saveAuditLog({ date: new Date().toLocaleString(), event: `Tab Selected (${tab})` });
+      });
+
+      // Listen for zoom changes
+      instance.Core.documentViewer.addEventListener('zoomUpdated', (zoom) => {
+        saveAuditLog({ date: new Date().toLocaleString(), event: `Zoom Updated (${zoom})` });
+      });
+
+      // Listen for rotation changes
+      instance.Core.documentViewer.addEventListener('rotationUpdated', (rotation) => {
+        saveAuditLog({ date: new Date().toLocaleString(), event: `Rotation Updated (${rotation})` });
+      });
+
+      // Listen for search events
+      instance.UI.addEventListener('searchExecuted', (searchTerm) => {
+        saveAuditLog({ date: new Date().toLocaleString(), event: `Search Executed (${searchTerm})` });
+      });
     });
+
+    return () => {
+      // Cleanup on component unmount
+      if (instanceRef.current) {
+        instanceRef.current.UI.dispose();
+        instanceRef.current = null;
+      }
+      if (viewer.current) {
+        while (viewer.current.firstChild) {
+          viewer.current.removeChild(viewer.current.firstChild);
+        }
+      }
+    };
   }, [fileUrl]);
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
-      <div ref={viewer} style={{ width: '100%', height: '100%' }}></div>
+    <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, margin: 0, padding: 0, overflow: 'auto', boxSizing: 'border-box' }}>
+      <div ref={viewer} style={{ width: '100%', height: '100%', boxSizing: 'border-box' }}></div>
     </div>
   );
 };

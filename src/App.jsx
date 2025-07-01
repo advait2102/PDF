@@ -8,8 +8,6 @@ import MergePDF from './MergePDF';
 const agencyFolders = [
   { name: 'Agency 1', locked: true, assigned: false, files: ['Black_Holes.pdf', 'Game of Thrones.pdf', 'Origin_of_Species.pdf', 'Special_Relativity.pdf'] },
   { name: 'Agency 2', locked: true, assigned: false, files: ['Black_Holes.pdf', 'Game of Thrones.pdf', 'Origin_of_Species.pdf', 'Special_Relativity.pdf'] },
-  { name: 'Agency 4', locked: false, assigned: true, files: ['Black_Holes.pdf', 'Game of Thrones.pdf', 'Origin_of_Species.pdf', 'Special_Relativity.pdf'] },
-  { name: 'Agency 5', locked: false, assigned: true, files: ['Black_Holes.pdf', 'Game of Thrones.pdf', 'Origin_of_Species.pdf', 'Special_Relativity.pdf'] },
 ];
 
 function App() {
@@ -27,7 +25,7 @@ function App() {
       {/* Menu Bar */}
       <nav style={{ width: '100%', background: '#1565c0', color: '#fff', display: 'flex', alignItems: 'center', padding: '0 24px', height: 48, boxSizing: 'border-box', borderBottom: '1px solid #e0e0e0' }}>
         <div style={{ display: 'flex', gap: 8 }}>
-          {['QA/QC', 'Donor Overview', 'OCR', 'Archived Donors', 'Audit logs', 'Track your files', 'Merge PDFs'].map((label, idx) => (
+          {['QA/QC', 'Donor Overview', 'Audit logs', 'Merge PDFs'].map((label, idx) => (
             <button
               key={label}
               style={{
@@ -37,7 +35,7 @@ function App() {
                 fontSize: 15,
                 cursor: 'pointer',
                 padding: '0 18px',
-                borderBottom: (page === 'quality' && idx === 0) || (page === 'donor-overview' && idx === 1) || (page === 'audit-log' && idx === 4) || (page === 'merge-pdf' && idx === 6) ? '3px solid #2196f3' : '3px solid transparent',
+                borderBottom: (page === 'quality' && idx === 0) || (page === 'donor-overview' && idx === 1) || (page === 'audit-log' && idx === 2) || (page === 'merge-pdf' && idx === 3) ? '3px solid #2196f3' : '3px solid transparent',
                 fontWeight: 500,
                 height: 48,
                 letterSpacing: 0.2,
@@ -48,8 +46,8 @@ function App() {
               onClick={() => {
                 if (idx === 0) setPage('quality');
                 if (idx === 1) setPage('donor-overview');
-                if (idx === 4) setPage('audit-log');
-                if (idx === 6) setPage('merge-pdf');
+                if (idx === 2) setPage('audit-log');
+                if (idx === 3) setPage('merge-pdf');
               }}
             >
               {label}

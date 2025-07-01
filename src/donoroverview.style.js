@@ -157,7 +157,7 @@ const donorOverviewStyles = {
   rightColumn: {
     width: '50%',
     height: '100%',
-    padding: 24,
+    padding: 12, // Reduced padding between columns
     boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
@@ -174,6 +174,7 @@ const donorOverviewStyles = {
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    border: '2px solid #1976d2', // Added blue border for PDFTron viewer
   },
   pdfInner: {
     width: '100%',
