@@ -166,7 +166,7 @@ const DonorOverview = () => {
 
   // Files to show in grid
   const filesToShow = mergedFile
-    ? [{ id: 2003671, document: mergedFile }, ...childGrid]
+    ? [{ id: 2003671, document: mergedFile, Type: 'T1' }, ...childGrid]
     : childGrid;
 
   return (
