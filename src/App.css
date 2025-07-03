@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* #root {
+#root {
   width: 100vw;
   height: 100vh;
   margin: 0;
@@ -53,4 +53,4 @@ body, html {
 
 .read-the-docs {
   color: #888;
-} */
+}
