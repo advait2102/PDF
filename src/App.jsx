@@ -17,7 +17,7 @@ function App() {
   const [page, setPage] = useState('quality'); // 'quality', 'donor-overview', 'audit-log'
 
   return (
-    <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div class = 'bg-red-100'>
       {/* Header Banner */}
       <header style={{ width: '100%', background: '#1976d2', color: '#fff', padding: '16px 0', textAlign: 'center', fontSize: 28, fontWeight: 600, boxSizing: 'border-box' }}>
         Experion POC
