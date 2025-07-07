@@ -81,7 +81,7 @@ const MergePDF = () => {
 
   return (
     <div style={{ padding: 32, maxWidth: 600, margin: '0 auto' }}>
-      <h2>Merge up to 4 PDF Files</h2>
+      <h2 className='mb-3 text-xl font-bold'>Merge up to 4 PDF Files</h2>
       {error && <div style={{ color: 'red', marginBottom: 16 }}>{error}</div>}
       {[0, 1, 2, 3].map(idx => (
         <div key={idx} style={{ marginBottom: 12 }}>
@@ -108,16 +108,26 @@ const MergePDF = () => {
           {files[idx] && <span style={{ marginLeft: 8, color: '#1976d2' }}>{files[idx].name}</span>}
         </div>
       ))}
-      <div style={{ margin: '16px 0' }}>
-        <button onClick={handleMerge} disabled={merging || files.filter(f => f).length < 2 || !coreReady}>
+      <div className="flex justify-start items-center mt-3 gap-4">
+        <button
+          onClick={handleMerge}
+          disabled={merging || files.filter(f => f).length < 2 || !coreReady}
+          className="py-3 px-4 text-sm font-medium rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none"
+        >
           {merging ? 'Merging...' : 'Merge PDFs'}
         </button>
+
+        {mergedUrl && (
+          <a
+            href={mergedUrl}
+            download="merged.pdf"
+            className="py-3 px-4 text-sm font-medium rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none"
+          >
+            Download Merged PDF
+          </a>
+        )}
       </div>
-      {mergedUrl && (
-        <div>
-          <a href={mergedUrl} download="merged.pdf">Download Merged PDF</a>
-        </div>
-      )}
+
       <div ref={viewer} style={{ display: 'none' }} />
     </div>
   );
