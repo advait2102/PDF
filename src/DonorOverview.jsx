@@ -203,7 +203,7 @@ const DonorOverview = () => {
             {mergeError && <div className="text-red-500 mb-4">Error: {mergeError}</div>}
             <div className="flex justify-end space-x-2">
               <button onClick={() => setShowMergePopup(false)} className="px-4 py-2 bg-gray-200 text-black rounded hover:bg-sky-300">Close</button>
-              <button onClick={handleMergeConfirm} disabled={!coreReady || merging} className={`px-4 py-2 text-black rounded ${coreReady && !merging ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-400 cursor-not-allowed'}`}>
+              <button onClick={handleMergeConfirm} disabled={!coreReady || merging} className={`px-4 py-2 text-white rounded ${coreReady && !merging ? 'bg-blue-500 hover:bg-blue-700' : 'bg-blue-400 cursor-not-allowed'}`}>
                 {coreReady ? (merging ? 'Merging...' : 'Merge & Download') : 'Loading...'}
               </button>
             </div>

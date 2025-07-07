@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import WebViewer from '@pdftron/webviewer';
+import { Pointer } from 'lucide-react';
 
 const MergePDF = () => {
   const viewer = useRef(null);
@@ -81,7 +82,6 @@ const MergePDF = () => {
   return (
     <div style={{ padding: 32, maxWidth: 600, margin: '0 auto' }}>
       <h2>Merge up to 4 PDF Files</h2>
-      {!coreReady && <div style={{ color: 'red', marginBottom: 16 }}>PDFTron Core is loading, please wait...</div>}
       {error && <div style={{ color: 'red', marginBottom: 16 }}>{error}</div>}
       {[0, 1, 2, 3].map(idx => (
         <div key={idx} style={{ marginBottom: 12 }}>
@@ -91,6 +91,19 @@ const MergePDF = () => {
             accept="application/pdf"
             onChange={e => handleFileChange(idx, e.target.files[0] || null)}
             disabled={!coreReady || merging}
+            className=" cursor-pointer
+                        block w-full text-sm text-gray-500
+                        file:cursor-pointer
+                        file:me-4 file:py-2 file:px-4
+                        file:rounded-lg file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-600 file:text-white
+                        hover:file:bg-blue-700
+                        file:disabled:opacity-50 file:disabled:pointer-events-none
+                        dark:text-neutral-500
+                        dark:file:bg-blue-500
+                        dark:hover:file:bg-blue-400
+                      "
           />
           {files[idx] && <span style={{ marginLeft: 8, color: '#1976d2' }}>{files[idx].name}</span>}
         </div>
