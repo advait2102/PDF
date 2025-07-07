@@ -21,6 +21,8 @@ const DonorOverview = () => {
   const [merging, setMerging] = useState(false);
   const [mergeError, setMergeError] = useState('');
   const webviewerDiv = useRef(null);
+  const menuRef = useRef(null);
+
 
   React.useLayoutEffect(() => {
     if (coreRef.current) {
@@ -71,6 +73,15 @@ const DonorOverview = () => {
       window.removeEventListener('mouseup', handleMouseUp);
     };
   });
+  React.useEffect(() => {
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleDragStart = (e, idx) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -131,14 +142,25 @@ const DonorOverview = () => {
         <div style={{ height: rowHeight }} className="overflow-y-auto p-4">
           <div className="flex space-x-60 items-center mb-2">
             <span className="font-bold text-lg mb-2">Documents Available for 2003671</span>
-            <button onClick={() => setShowMenu(v => !v)} className="text-gray-800 text-xl">
-              <Settings />
-            </button>
-            {showMenu && (
-              <div className="absolute mt-1 ml-110 bg-white shadow-md rounded border text-sm">
-                <div className="px-4 py-2 cursor-pointer hover:bg-sky-100 rounded" onClick={handleMerge}>Merge</div>
-              </div>
-            )}
+            <div className="relative inline-block text-left" ref={menuRef}>
+              <button
+                onClick={() => setShowMenu(v => !v)}
+                className="text-gray-800 text-xl p-2 hover:bg-gray-100 rounded"
+              >
+                <Settings />
+              </button>
+
+              {showMenu && (
+                <div className="absolute right-0 z-10 mt-2 w-32 origin-top-right rounded-md bg-white shadow-lg border text-sm">
+                  <div
+                    className="px-4 py-2 cursor-pointer hover:bg-sky-100 rounded"
+                    onClick={handleMerge}
+                  >
+                    Merge
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           <table className="w-full text-left border border-gray-200">
             <thead className="bg-gray-100">

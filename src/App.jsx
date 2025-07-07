@@ -4,6 +4,7 @@ import PdfTronViewer from './PdfTronViewer';
 import DonorOverview from './DonorOverview';
 import AuditLog from './AuditLog';
 import MergePDF from './MergePDF';
+import { FolderLock } from 'lucide-react';
 
 const agencyFolders = [
   { name: 'Agency 1', locked: true, assigned: false, files: ['Black_Holes.pdf', 'Game of Thrones.pdf', 'Origin_of_Species.pdf', 'Special_Relativity.pdf'] },
@@ -61,7 +62,7 @@ function App() {
           {/* Left Column (20%) */}
           <aside style={{ width: '20%', background: '#f5f5f5', borderRight: '1px solid #e0e0e0', padding: 0, minWidth: 0, boxSizing: 'border-box', overflowY: 'auto' }}>
             <div style={{ padding: 0 }}>
-              <h4 style={{ background: '#222b36', color: '#fff', fontWeight: 600, fontSize: 13, letterSpacing: 0.2, padding: '18px 0 12px 24px', margin: 0, borderBottom: '1px solid #e0e0e0', fontFamily: 'Inter, Arial, sans-serif' }}>Agencies</h4>
+              <h4 style={{ background: '#c1c1c1', color: 'black', fontWeight: 600, fontSize: 17, letterSpacing: 0.2, padding: '18px 0 12px 24px', margin: 0, borderBottom: '1px solid #e0e0e0', fontFamily: 'Inter, Arial, sans-serif' }}>Agencies</h4>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                 {agencyFolders.map((agency, idx) => (
                   <li key={agency.name}>
@@ -90,7 +91,7 @@ function App() {
                           fontFamily: 'Inter, Arial, sans-serif',
                         }}
                       >
-                        {agency.name} {agency.locked ? '(locked for you)' : '(Assigned to different user)'}
+                        {agency.name} {agency.locked ?   <FolderLock className="inline w-4 h-4 ml-9"/> : '(Assigned to different user)'}
                       </button>
                     </div>
                     {/* Tree view: show files as children if this agency is selected */}
