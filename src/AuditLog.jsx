@@ -25,7 +25,7 @@ const AuditLog = () => {
       <h2 className="font-bold text-lg text-base mb-4">PDF File Manager Audit Log</h2>
       <button
         onClick={clearLogs}
-        className="mb-4 px-4 py-2 bg-red-600 text-white border-none rounded cursor-pointer hover:bg-red-700 transition-colors"
+        className=" bg-red-100 mb-4 px-4 py-2 text-black border-none rounded cursor-pointer hover:bg-red-700 transition-colors"
       >
         Clear All Logs
       </button>
